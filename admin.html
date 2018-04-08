@@ -38,9 +38,6 @@
         <script src="qrcode.js"></script>
 
         <div id="qrcode"></div>
-        <script type="text/javascript">
-        new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
-        </script>
         <br><br>
         
 
@@ -52,26 +49,26 @@
   </div>
 <div class="form-group">
   <label for="inputAddress">A - Votes: <span id='a_votes'></span></label>
-  <input type="text" class="form-control" id="c" placeholder="Answer A">
+  <input type="text" class="form-control" id="a_text" placeholder="Answer A">
 </div>
 <div class="form-group">
   <label for="inputAddress2">B - Votes: <span id='b_votes'></span></label>
-  <input type="text" class="form-control" id="d" placeholder="Answer B">
+  <input type="text" class="form-control" id="b_text" placeholder="Answer B">
 </div>
 <div class="form-group">
   <label for="inputAddress">C - Votes: <span id='c_votes'></span></label>
-  <input type="text" class="form-control" id="c" placeholder="Answer C">
+  <input type="text" class="form-control" id="c_text" placeholder="Answer C">
 </div>
 <div class="form-group">
   <label for="inputAddress2">D - Votes: <span id='d_votes'></span></label>
-  <input type="text" class="form-control" id="d" placeholder="Answer D">
+  <input type="text" class="form-control" id="d_text" placeholder="Answer D">
 </div>
 
 <button type="button" onclick="updatepoll()" class="btn btn-primary">Update</button>
 <button type="button" onclick="location.reload()" class="btn btn-primary pull-right">Refresh Results</button>
 </form>
 
-
+<input type="hidden" id="mongoid">
         
       </div>
 
@@ -109,16 +106,17 @@
     function updatepoll(){
       
       var newpoll = {
-              	session_id: hashCode(),
-              	question: "",
-                answer_a_text: "",
-                // answer_a_count: 0,
-                answer_b_text: "",
-                // answer_b_count: 0,
-                answer_c_text: "",
-                // answer_c_count: 0,
-                answer_d_text: "",
-                // answer_d_count: 0,
+              	session_id: getSearchParams("session_id"),
+              	question: $('#question').val(),
+                answer_a_text: $('#a_text').val(),
+                answer_a_count: 0,
+                answer_b_text: $('#b_text').val(),
+                answer_b_count: 0,
+                answer_c_text: $('#c_text').val(),
+                answer_c_count: 0,
+                answer_d_text: $('#d_text').val(),
+                answer_d_count: 0,
+                _id: $('#mongoid').val()
               };
       
       $.post( "https://webhooks.mongodb-stitch.com/api/client/v2.0/app/pyli-vote-fphii/service/getpoll/incoming_webhook/setpoll?secret=bitcamp", newpoll, function(response){
@@ -137,15 +135,15 @@
       //if session is not in url - create one and redirect
       var poll = {
               	session_id: hashCode(),
-              	question: $('#question').val(),
-                answer_a_text: $('#a').val(),
-                answer_a_count: 0,
-                answer_b_text: $('#b').val(),
-                answer_b_count: 0,
-                answer_c_text: $('#c').val(),
-                answer_c_count: 0,
-                answer_d_text: $('#d').val(),
-                answer_d_count: 0,
+              	question: "",
+                answer_a_text: "",
+                answer_a_count: 0+0,
+                answer_b_text: "",
+                answer_b_count: 0+0,
+                answer_c_text: "",
+                answer_c_count: 0+0,
+                answer_d_text: "",
+                answer_d_count: 0+0,
               };
       if(!getSearchParams("session_id")){
         $.post( "https://webhooks.mongodb-stitch.com/api/client/v2.0/app/pyli-vote-fphii/service/getpoll/incoming_webhook/createpoll?secret=bitcamp", poll, function(response){
@@ -161,17 +159,22 @@
       else{
         $.get( "https://webhooks.mongodb-stitch.com/api/client/v2.0/app/pyli-vote-fphii/service/getpoll/incoming_webhook/getpollbyid?secret=bitcamp&session_id=" + getSearchParams("session_id"), function(response) {
 
+          $('#mongoid').val(response._id.$oid);
+
           $('#session_id').text(getSearchParams("session_id"));
           $('#question').val(response.question);
-          $('#a').val(response.answer_a_text);
-          $('#b').val(response.answer_b_text);
-          $('#c').val(response.answer_c_text);
-          $('#d').val(response.answer_d_text);
+          $('#a_text').val(response.answer_a_text);
+          $('#b_text').val(response.answer_b_text);
+          $('#c_text').val(response.answer_c_text);
+          $('#d_text').val(response.answer_d_text);
           
-          $('#a_votes').text(response.answer_a_count.$numberLong);
-          $('#b_votes').text(response.answer_b_count.$numberLong);
-          $('#c_votes').text(response.answer_c_count.$numberLong);
-          $('#d_votes').text(response.answer_d_count.$numberLong);
+          $('#a_votes').text(response.answer_a_count.$numberDouble || 0);
+          $('#b_votes').text(response.answer_b_count.$numberDouble || 0);
+          $('#c_votes').text(response.answer_c_count.$numberDouble || 0);
+          $('#d_votes').text(response.answer_d_count.$numberDouble || 0);
+          
+          new QRCode(document.getElementById("qrcode"), "https://schuylerc.github.io/vote-code/vote.html?session_id=" + getSearchParams("session_id"));
+          
         })
           .fail(function() {
             alert( "an error has occured loading the poll" );
