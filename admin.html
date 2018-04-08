@@ -40,7 +40,7 @@
         <div id="qrcode"></div>
         <br><br>
         
-
+<span id="msg" style="color: green;"></span>
 
 <form>
   <div class="form-group">
@@ -123,6 +123,7 @@
         console.log(response);
       }, 'json')
         .done(function() {
+          $('#msg').html('Poll Updated Successfully');
           // window.location = 'admin.html?session_id=' + poll.session_id;
         })
         .fail(function() {
